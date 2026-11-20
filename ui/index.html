@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoTrace - Event Reconstruction</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">CT</div>
+                <div>
+                    <h1>ChronoTrace</h1>
+                    <p>Event Reconstruction</p>
+                </div>
+            </div>
+
+            <nav class="nav" id="nav">
+                <button class="nav-item active" data-view="load">1. Load event log</button>
+                <button class="nav-item" data-view="original">2. Original events</button>
+                <button class="nav-item" data-view="timeline">3. Reconstruct timeline</button>
+                <button class="nav-item" data-view="search-id">4. Search by ID</button>
+                <button class="nav-item" data-view="search-range">5. Search time range</button>
+                <button class="nav-item" data-view="validate">6. Validate records</button>
+                <button class="nav-item" data-view="merge">7. Merge sources</button>
+                <button class="nav-item" data-view="graph">8. Dependencies</button>
+                <button class="nav-item" data-view="export">9. Export timeline</button>
+                <button class="nav-item" data-view="report">10. Analysis report</button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">No data loaded</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h2 id="viewTitle">Load event log</h2>
+                    <p id="viewSubtitle">Import a CSV file or use the sample dataset.</p>
+                </div>
+                <div class="dataset-badge" id="datasetBadge">0 events</div>
+            </header>
+
+            <section class="view active" id="view-load">
+                <div class="grid two">
+                    <div class="card">
+                        <h3>Import CSV</h3>
+                        <p class="muted">Expected columns: <code>id,timestamp,source,description</code></p>
+                        <label class="dropzone" id="eventDrop" for="eventFile">
+                            <input type="file" id="eventFile" accept=".csv,text/csv" hidden>
+                            <span class="drop-title">Choose a CSV file</span>
+                            <span class="drop-sub">or drag and drop it here</span>
+                        </label>
+                        <div class="actions">
+                            <button class="btn ghost" id="loadSample">Load sample dataset</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Current dataset</h3>
+                        <div class="stat-grid">
+                            <div class="stat">
+                                <span class="stat-label">Events</span>
+                                <strong id="statEvents">0</strong>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Sources</span>
+                                <strong id="statSources">0</strong>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Earliest</span>
+                                <strong class="mono" id="statEarliest">-</strong>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Latest</span>
+                                <strong class="mono" id="statLatest">-</strong>
+                            </div>
+                        </div>
+                        <p class="muted" id="loadNote">Upload a file to populate the dataset.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Preview</h3>
+                        <button class="btn small ghost" id="previewRefresh">Refresh</button>
+                    </div>
+                    <div class="table-wrap" id="loadPreview"></div>
+                </div>
+            </section>
+
+            <section class="view" id="view-original">
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Original event order</h3>
+                        <button class="btn small ghost" id="originalRefresh">Refresh</button>
+                    </div>
+                    <p class="muted">Records exactly as loaded. Reconstruction never overwrites this order.</p>
+                    <div class="table-wrap" id="originalTable"></div>
+                </div>
+            </section>
+
+            <section class="view" id="view-timeline">
+                <div class="card graph-card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Event flow</h3>
+                            <p class="muted">Each node is an event, connected in recorded chronological order.</p>
+                        </div>
+                        <div class="legend" id="timelineLegend"></div>
+                    </div>
+                    <div class="flow-wrap">
+                        <svg id="timelineSvg" viewBox="0 0 900 360" role="img" aria-label="Event flow graph"></svg>
+                    </div>
+                    <p class="flow-note" id="timelineGraphNote">Reconstruct the timeline to visualize event connections.</p>
+                </div>
+                <div class="card signal-card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Signal loss trace</h3>
+                            <p class="muted">Recorded steps leading to the black box losing signal.</p>
+                        </div>
+                        <span class="signal-status" id="signalStatus">Waiting</span>
+                    </div>
+                    <div class="signal-summary" id="signalSummary">Reconstruct the timeline to detect a signal-loss event.</div>
+                    <div id="signalSteps"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Chronological timeline</h3>
+                            <p class="muted">Stable Merge Sort by timestamp, O(n log n).</p>
+                        </div>
+                        <button class="btn" id="reconstruct">Reconstruct</button>
+                    </div>
+                    <div class="table-wrap" id="timelineTable"></div>
+                </div>
+            </section>
+
+            <section class="view" id="view-search-id">
+                <div class="card">
+                    <h3>Find an event by ID</h3>
+                    <p class="muted">Linear search across the loaded records, O(n).</p>
+                    <div class="form-row">
+                        <input type="number" id="searchIdInput" placeholder="Event ID" min="1">
+                        <button class="btn" id="searchIdButton">Search</button>
+                    </div>
+                    <div id="searchIdResult" class="result-box muted">No search performed yet.</div>
+                </div>
+            </section>
+
+            <section class="view" id="view-search-range">
+                <div class="card">
+                    <h3>Search by time range</h3>
+                    <p class="muted">Inclusive range using binary search on the sorted timeline, O(log n + m).</p>
+                    <div class="form-row">
+                        <input type="number" id="rangeStart" placeholder="Start timestamp">
+                        <input type="number" id="rangeEnd" placeholder="End timestamp">
+                        <button class="btn" id="rangeButton">Search</button>
+                        <button class="btn ghost" id="rangeBounds">Use dataset bounds</button>
+                    </div>
+                    <div class="table-wrap" id="rangeTable"></div>
+                </div>
+            </section>
+
+            <section class="view" id="view-validate">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Data quality</h3>
+                            <p class="muted">Duplicate IDs, repeated timestamps, and possible ID gaps.</p>
+                        </div>
+                        <button class="btn" id="validateButton">Validate</button>
+                    </div>
+                    <div class="stat-grid validation-grid" id="validationStats"></div>
+                    <div id="validationDetails" class="result-box muted">Run validation to inspect the dataset.</div>
+                </div>
+            </section>
+
+            <section class="view" id="view-merge">
+                <div class="card">
+                    <h3>Merge multiple sources</h3>
+                    <p class="muted">Each stream is sorted, then merged pairwise. No Min-Heap is used.</p>
+                    <label class="dropzone compact" id="mergeDrop" for="mergeFiles">
+                        <input type="file" id="mergeFiles" accept=".csv,text/csv" multiple hidden>
+                        <span class="drop-title">Choose source CSV files</span>
+                        <span class="drop-sub">Select two or more files</span>
+                    </label>
+                    <div class="form-row">
+                        <button class="btn" id="mergeButton">Merge sources</button>
+                        <span class="muted" id="mergeNote">No files selected.</span>
+                    </div>
+                    <div class="table-wrap" id="mergeTable"></div>
+                </div>
+                <div class="card graph-card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Merged event flow</h3>
+                            <p class="muted">The combined timeline as connected event nodes.</p>
+                        </div>
+                        <div class="legend" id="mergeLegend"></div>
+                    </div>
+                    <div class="flow-wrap">
+                        <svg id="mergeSvg" viewBox="0 0 900 360" role="img" aria-label="Merged event flow graph"></svg>
+                    </div>
+                    <p class="flow-note" id="mergeGraphNote">Merge sources to see the combined event flow.</p>
+                </div>
+            </section>
+
+            <section class="view" id="view-graph">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Dependency graph</h3>
+                            <p class="muted">Explicit edges only. Timestamps do not create dependencies.</p>
+                        </div>
+                        <button class="btn small ghost" id="loadDepsSample">Load sample edges</button>
+                    </div>
+                    <div class="form-row">
+                        <label class="file-inline">
+                            <input type="file" id="depsFile" accept=".csv,text/csv">
+                            <span>Dependency CSV</span>
+                        </label>
+                        <input type="number" id="graphStart" placeholder="Start event ID" min="1">
+                        <button class="btn" id="bfsButton">BFS</button>
+                        <button class="btn" id="dfsButton">DFS</button>
+                    </div>
+                    <div class="graph-wrap">
+                        <svg id="graphSvg" viewBox="0 0 640 420" role="img" aria-label="Dependency graph"></svg>
+                    </div>
+                    <div id="traversalResult" class="result-box muted">Load dependency edges to begin.</div>
+                    <div class="table-wrap" id="adjacencyTable"></div>
+                </div>
+            </section>
+
+            <section class="view" id="view-export">
+                <div class="grid two">
+                    <div class="card">
+                        <h3>Export reconstructed timeline</h3>
+                        <p class="muted">Downloads a CSV sorted by timestamp. The timeline is rebuilt first if needed.</p>
+                        <button class="btn" id="exportTimeline">Download timeline CSV</button>
+                    </div>
+                    <div class="card">
+                        <h3>Timeline snapshot</h3>
+                        <div class="table-wrap compact-table" id="exportPreview"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view" id="view-report">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h3>Analysis report</h3>
+                            <p class="muted">Dataset totals, validation details, timeline, and dependency edges.</p>
+                        </div>
+                        <button class="btn" id="generateReport">Generate</button>
+                    </div>
+                    <div class="form-row">
+                        <button class="btn ghost" id="downloadReport">Download report</button>
+                    </div>
+                    <pre class="report" id="reportOutput">Generate a report to preview it here.</pre>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="app.js"></script>
+</body>
+</html>

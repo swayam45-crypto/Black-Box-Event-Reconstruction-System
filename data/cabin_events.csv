@@ -1,0 +1,4 @@
+id,timestamp,source,description
+202,1792900820,CABIN,Cabin pressure nominal
+205,1792900825,CABIN,Door sealed
+208,1792900850,CABIN,Oxygen level normal

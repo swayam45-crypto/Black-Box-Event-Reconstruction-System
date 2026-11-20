@@ -1,0 +1,4 @@
+id,timestamp,source,description
+203,1792900830,COMM,Radio check
+206,1792900835,COMM,GPS lock acquired
+209,1792900855,COMM,Communication restored

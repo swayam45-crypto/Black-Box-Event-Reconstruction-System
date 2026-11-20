@@ -1,0 +1,10 @@
+id,timestamp,source,description
+201,1792900810,ENGINE,Engine start
+204,1792900815,ENGINE,Fuel flow stable
+202,1792900820,CABIN,Cabin pressure nominal
+205,1792900825,CABIN,Door sealed
+203,1792900830,COMM,Radio check
+206,1792900835,COMM,GPS lock acquired
+207,1792900845,ENGINE,Engine temperature normal
+208,1792900850,CABIN,Oxygen level normal
+209,1792900855,COMM,Communication restored

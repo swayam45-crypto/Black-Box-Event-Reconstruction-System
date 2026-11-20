@@ -1,0 +1,27 @@
+ChronoTrace Analysis Report
+===========================
+
+Loaded events: 5
+Timeline events: 5
+Duplicate IDs: 0
+Repeated timestamps: 0
+Possible ID gaps: 0
+Dependency edges: 0
+
+Reconstructed timeline
+----------------------
+1792900801  [101]  SENSOR : Monitoring started
+1792900802  [102]  FLIGHT : Altitude reading
+1792900803  [103]  CABIN : Pressure warning
+1792900805  [104]  ENGINE : Engine reading recorded
+1792900807  [105]  COMM : Signal lost
+
+Data-quality details
+--------------------
+Duplicate IDs: none
+Repeated timestamps: none
+Possible ID gaps: none
+
+Dependency graph (adjacency list)
+---------------------------------
+No dependency edges loaded.

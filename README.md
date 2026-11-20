@@ -676,6 +676,25 @@ cmake --build build
 ./build/chronotrace
 ```
 
+### Web interface
+
+The static web interface is in `ui/`. It supports the same features as the CLI and does not
+require Python.
+
+```powershell
+.\ui\start-ui.cmd
+```
+
+The launcher starts a local Node.js server on a free port and opens the browser. You can also
+run the server manually:
+
+```powershell
+node ui/server.js
+```
+
+Open `http://127.0.0.1:8080/` (or the port printed by the server). Opening `ui/index.html`
+directly in a browser also works.
+
 ---
 
 ## 13. Testing Strategy
