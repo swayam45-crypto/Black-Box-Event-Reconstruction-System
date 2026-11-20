@@ -681,6 +681,14 @@ cmake --build build
 The static web interface is in `ui/`. It supports the same features as the CLI and does not
 require Python.
 
+### Hosted version
+
+A live version is hosted on Vercel:
+
+https://black-box-event-reconstruction-syst-one.vercel.app/
+
+### Local usage
+
 ```powershell
 .\ui\start-ui.cmd
 ```
